@@ -354,7 +354,7 @@ const getMembersBot = (botsToken) =>
           dataMembersBots.map(async (element) => {
             try{
                 const user_id = element.message.from.id
-                const username = element.message.from.username
+                var username = element.message.from.username
                 const first_name = element.message.from.first_name
                 const last_name = element.message.from.last_name ?? ''
                 const fullName = `${first_name.replace(/\s+/g, '')} ${last_name.replace(/\s+/g, '')}`
@@ -375,7 +375,7 @@ const getMembersBot = (botsToken) =>
                     const claimDailyRewardss = await claimDailyRewards(token,user_id)
                     if(claimDailyRewardss.tokens){
                       twisters.put(username, {
-                        text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | Daily Rewards claimed ${claimDailyRewardss.tokens}`});
+                        text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | Daily Rewards claimed ${claimDailyRewardss.tokens}...`});
                     }else{
                     twisters.put(username, {
                       text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | Daily ${claimDailyRewardss.error}...`});
@@ -391,10 +391,10 @@ const getMembersBot = (botsToken) =>
                     const levelUpgrades = await levelUpgrade(token)
                     if(levelUpgrades.success === true){
                     twisters.put(username, {
-                      text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | Success Upgrades to next level...`});
+                      text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | Success Upgrades to level ${levelUpgrades.next_lvl}...`});
                     }else{
                     twisters.put(username, {
-                      text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | Failed Upgrades to next level...`});
+                      text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | Failed Upgrades to level ${levelUpgrades.next_lvl}...`});
                     }
                   }else{
                     twisters.put(username, {
@@ -418,7 +418,7 @@ const getMembersBot = (botsToken) =>
                   }
                 }else{
                   twisters.put(username, {
-                    text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] User is not registered yet : Name ${fullName} | UserId ${user_id}, please register first on https://t.me/HexacoinBot...`});
+                    text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] User is not registered yet [=> Name ${fullName} | UserId ${user_id} <=], please register first on https://t.me/HexacoinBot...`});
                 }
 
             } catch (e) {
