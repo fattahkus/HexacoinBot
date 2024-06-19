@@ -395,7 +395,7 @@ const getMembersBot = (botsToken) =>
       body: null,
       method: "GET"
     })
-      .then((res) => res.clone().json().catch(() => res.text()))
+      .then((res) => res.json())
       .then((res) => {
           resolve(res);
       })
