@@ -1,5 +1,6 @@
 import fetch from "node-fetch";
 import { Twisters } from "twisters";
+import delay from 'delay'
 import moment from 'moment';
 import dotenv from "dotenv";
 dotenv.config();
@@ -313,6 +314,66 @@ const levelUpgrade = (bearer) =>
       });
 });
 
+const getMissions = (bearer) =>
+  new Promise((resolve, reject) => {
+    fetch("https://ago-api.onrender.com/api/missions", {
+      headers: {
+        "accept": "*/*",
+        "accept-language": "en-US,en;q=0.9",
+        "authorization": bearer,
+        "content-type": "application/json",
+        "priority": "u=1, i",
+        "sec-ch-ua": "\"Not/A)Brand\";v=\"8\", \"Chromium\";v=\"126\", \"Microsoft Edge\";v=\"126\", \"Microsoft Edge WebView2\";v=\"126\"",
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": "\"Windows\"",
+        "sec-fetch-dest": "empty",
+        "sec-fetch-mode": "cors",
+        "sec-fetch-site": "cross-site",
+        "Referer": "https://ago-wallet.hexacore.io/",
+        "Referrer-Policy": "strict-origin-when-cross-origin"
+      },
+      body: null,
+      method: "GET"
+    })
+      .then((res) => res.clone().json().catch(() => res.text()))
+      .then((res) => {
+          resolve(res);
+      })
+      .catch((err) => {
+          reject(err);
+      });
+});
+
+const claimMission = (bearer,missionId) =>
+  new Promise((resolve, reject) => {
+    fetch("https://ago-api.onrender.com/api/mission-complete", {
+      headers: {
+        "accept": "*/*",
+        "accept-language": "en-US,en;q=0.9",
+        "authorization": bearer,
+        "content-type": "application/json",
+        "priority": "u=1, i",
+        "sec-ch-ua": "\"Not/A)Brand\";v=\"8\", \"Chromium\";v=\"126\", \"Microsoft Edge\";v=\"126\", \"Microsoft Edge WebView2\";v=\"126\"",
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": "\"Windows\"",
+        "sec-fetch-dest": "empty",
+        "sec-fetch-mode": "cors",
+        "sec-fetch-site": "cross-site",
+        "Referer": "https://ago-wallet.hexacore.io/",
+        "Referrer-Policy": "strict-origin-when-cross-origin"
+      },
+      body: `{\"missionId\":${missionId}}`,
+      method: "POST"
+    })
+      .then((res) => res.clone().json().catch(() => res.text()))
+      .then((res) => {
+          resolve(res);
+      })
+      .catch((err) => {
+          reject(err);
+      });
+});
+
 const getMembersBot = (botsToken) =>
   new Promise((resolve, reject) => {
     fetch(`https://api.telegram.org/${botsToken}/getUpdates`, {
@@ -367,6 +428,7 @@ const getMembersBot = (botsToken) =>
                 const levelInfos = await levelInfo(token)
                 const getDailyRewardss = await getDailyRewards(token,user_id)
                 const checkTapss = await checkTaps(token)
+                const getMissionss = await getMissions(token)
 
                 if(getRegisters.message === 'User created with referral' || getRegisters.error === 'User already exists'){
                   if(getDailyRewardss.success === true){
@@ -384,6 +446,30 @@ const getMembersBot = (botsToken) =>
                     twisters.put(username, {
                       text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | Daily Rewards not available...`});
                   }
+
+                  getMissionss.forEach(async (element) => {
+                    const idTask = element.id
+                    const statusTask = element.isCompleted
+                    const titleTask = element.description
+
+                    if(statusTask === false){
+                      let claimMissions = await claimMission(token,idTask)
+                        if(claimMissions.success === true){
+                            twisters.put(username, {
+                              text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | MissionId : ${idTask} missionName : ${titleTask} has been completed...`});
+                        }else if(claimMissions.success === false){
+                            twisters.put(username, {
+                              text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | MissionId : ${idTask} missionName : ${titleTask} can't completed...`});
+                            claimMissions = await claimMission(token,idTask)
+                            if(claimMissions.success === true){
+                                twisters.put(username, {
+                                  text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | MissionId : ${idTask} missionName : ${titleTask} has been completed...`});
+                            }
+                        }else{
+                          console.log(`[${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | MissionId : ${idTask} missionName : ${titleTask} can't completed...`)
+                        }
+                    }
+                  })
   
                   if(levelInfos.upgrade_available === true && checkBalances.balance > levelInfos.upgrade_price){
                     twisters.put(username, {
@@ -422,7 +508,7 @@ const getMembersBot = (botsToken) =>
                 }
 
             } catch (e) {
-                console.log(e)
+                // console.log(e)
                 twisters.put(username, {
                   text: `[${moment().format("DD/MM/YY HH:mm:ss")}] Internal Server Error...`});
             } 
