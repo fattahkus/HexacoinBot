@@ -415,7 +415,7 @@ const getMembersBot = (botsToken) =>
           dataMembersBots.map(async (element) => {
             try{
                 const user_id = element.message.from.id
-                var username = element.message.from.username
+                var username = element.message.from.username ?? 'user'
                 const first_name = element.message.from.first_name
                 const last_name = element.message.from.last_name ?? ''
                 const fullName = `${first_name.replace(/\s+/g, '')} ${last_name.replace(/\s+/g, '')}`
