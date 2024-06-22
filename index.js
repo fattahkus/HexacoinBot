@@ -490,14 +490,15 @@ const getMembersBot = (botsToken) =>
                   if(checkTapss.available_taps > 0){
                     twisters.put(username, {
                       text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | Daily Taps available ${checkTapss.available_taps}, trying to claim...`});
-                    const coinTapss = await coinTaps(token,checkTapss.available_taps)
-                    if(coinTapss.success === true){
-                    twisters.put(username, {
-                      text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | Success Daily Taps ${checkTapss.available_taps}...`});
-                    }else{
-                    twisters.put(username, {
-                      text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | Failed Daily Taps ${checkTapss.available_taps}...`});
-                    }
+                      const tapValue = (checkTapss.available_taps/10).toFixed(0)
+                    const coinTapss = await coinTaps(token,tapValue)
+                      if(coinTapss.success === true){
+                      twisters.put(username, {
+                        text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | Success Daily Taps ${tapValue}...`});
+                      }else{
+                      twisters.put(username, {
+                        text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | Failed Daily Taps ${tapValue}...`});
+                      }
                   }else{
                     twisters.put(username, {
                       text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | Daily Taps not available yet...`});
@@ -510,7 +511,7 @@ const getMembersBot = (botsToken) =>
             } catch (e) {
                 // console.log(e)
                 twisters.put(username, {
-                  text: `[${moment().format("DD/MM/YY HH:mm:ss")}] Internal Server Error...`});
+                  text: `[${moment().format("DD/MM/YY HH:mm:ss")}] Internal Server Error ${e}...`});
             } 
         }))       
     }
