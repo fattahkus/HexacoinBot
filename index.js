@@ -486,18 +486,24 @@ const getMembersBot = (botsToken) =>
                     twisters.put(username, {
                       text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | Don't have enough coins to upgrade...`});
                   }
-  
-                  if(checkTapss.available_taps > 0){
+                  
+                  let tapValue;
+                  if(checkTapss.available_taps > 10){
+                    tapValue = (checkTapss.available_taps/10).toFixed(0)
+                  }else{
+                    tapValue = (checkTapss.available_taps/1)
+                  }
+
+                  if(checkTapss.available_taps > 0 && tapValue > 0){
                     twisters.put(username, {
-                      text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | Daily Taps available ${checkTapss.available_taps}, trying to claim...`});
-                      const tapValue = (checkTapss.available_taps/10).toFixed(0)
+                      text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | Daily Taps available ${checkTapss.available_taps}, trying to claim ${tapValue} Taps...`});
                     const coinTapss = await coinTaps(token,tapValue)
                       if(coinTapss.success === true){
                       twisters.put(username, {
-                        text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | Success Daily Taps ${tapValue}...`});
+                        text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | Success Claim Daily Taps ${tapValue}...`});
                       }else{
                       twisters.put(username, {
-                        text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | Failed Daily Taps ${tapValue}...`});
+                        text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | Failed Claim Daily Taps ${tapValue}...`});
                       }
                   }else{
                     twisters.put(username, {
