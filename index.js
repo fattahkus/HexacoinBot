@@ -408,7 +408,7 @@ const getMembersBot = (botsToken) =>
 
 (async () => {
   const twisters = new Twisters();
-  const botsToken = process.env.BOTS_TOKEN
+  const botsToken = JSON.parse(process.env.BOTS_TOKEN)
   const referer_id = process.env.REFERRAL
   const path = './userData.json'
 
@@ -418,142 +418,146 @@ const getMembersBot = (botsToken) =>
   }
     while (true) {
       try{
-        const getMembersBots = await getMembersBot(botsToken)
-        const dataMembersBots = getMembersBots.result
-        
-        for (var index = 0; index < dataMembersBots.length; ++index) {
-            var userData = JSON.parse(fs.readFileSync(path))
-              
-              const dataMembersBots = getMembersBots.result[index].message.from
-              // console.log(dataMembersBots)
-              const jsonData = JSON.parse(JSON.stringify(dataMembersBots))
-              var jsonDataParseMain = jsonData.id
-              // console.log(jsonDataParseMain)
-              
-              function checkData(userData, newData) {
-                const { length } = userData;
-                const found = userData.some(el => el.id === newData);
-           
-                if (!found){ 
-                  // console.log("data not exist")
-                  userData.push(jsonData);
-                  fs.writeFileSync(path, JSON.stringify(userData, 0, 2), 'utf-8');
-                  return userData;
-                }else{
-                  // console.log("data exist")
+        for(var indexs = 0; indexs < botsToken.length; indexs++){
+          const getMembersBots = await getMembersBot(botsToken[indexs])
+          // console.log("getMembersBots :",getMembersBots)
+          const dataMembersBots = getMembersBots.result
+          
+          for (var index = 0; index < dataMembersBots.length; ++index) {
+              var userData = JSON.parse(fs.readFileSync(path))
+                
+                const dataMembersBots = getMembersBots.result[index].message.from
+                // console.log(dataMembersBots)
+                const jsonData = JSON.parse(JSON.stringify(dataMembersBots))
+                var jsonDataParseMain = jsonData.id
+                // console.log(jsonDataParseMain)
+                
+                function checkData(userData, newData) {
+                  const { length } = userData;
+                  const found = userData.some(el => el.id === newData);
+             
+                  if (!found){ 
+                    // console.log("data not exist")
+                    userData.push(jsonData);
+                    fs.writeFileSync(path, JSON.stringify(userData, 0, 2), 'utf-8');
+                    return userData;
+                  }else{
+                    // console.log("data exist")
+                  }
                 }
-              }
-              checkData(userData, jsonDataParseMain);
-              await delay(100)
+                checkData(userData, jsonDataParseMain);
+                await delay(100)
+          }
+          await delay(100)
         }
         
         const queryData = JSON.parse(fs.readFileSync(path, "utf8"))
-          await Promise.all(
-            queryData.map(async (element) => {
-                  const user_id = element.id
-                  var username = element.username ?? 'user'
-                  const first_name = element.first_name
-                  const last_name = element.last_name ?? ''
-                  const fullName = `${first_name.replace(/\s+/g, '')} ${last_name.replace(/\s+/g, '')}`
-                  const getAuth = await getToken(user_id, username)
-                  const token = getAuth.token
+          // await Promise.all(
+          //   queryData.map(async (element) => {
+          //         const user_id = element.id
+          //         var username = element.username ?? 'user'
+          //         const first_name = element.first_name
+          //         const last_name = element.last_name ?? ''
+          //         const fullName = `${first_name.replace(/\s+/g, '')} ${last_name.replace(/\s+/g, '')}`
+          //         const getAuth = await getToken(user_id, username)
+          //         const token = getAuth.token
                   
-                  const getRegisters = await getRegister(token,user_id,username,fullName,referer_id) 
-                  const checkBalances = await checkBalance(token,user_id)
-                  const getReferrals = await getReferral(token)
-                  const levelInfos = await levelInfo(token)
-                  const getDailyRewardss = await getDailyRewards(token,user_id)
-                  const checkTapss = await checkTaps(token)
-                  const getMissionss = await getMissions(token)
+          //         const getRegisters = await getRegister(token,user_id,username,fullName,referer_id) 
+          //         const checkBalances = await checkBalance(token,user_id)
+          //         const getReferrals = await getReferral(token)
+          //         const levelInfos = await levelInfo(token)
+          //         const getDailyRewardss = await getDailyRewards(token,user_id)
+          //         const checkTapss = await checkTaps(token)
+          //         const getMissionss = await getMissions(token)
   
-                  if(getRegisters.message === 'User created with referral' || getRegisters.error === 'User already exists'){
-                    if(getDailyRewardss.success === true){
-                      twisters.put(username, {
-                        text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | Daily Rewards available, trying to claim...`});
-                      const claimDailyRewardss = await claimDailyRewards(token,user_id)
-                      if(claimDailyRewardss.tokens){
-                        twisters.put(username, {
-                          text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | Daily Rewards claimed ${claimDailyRewardss.tokens}...`});
-                      }else{
-                      twisters.put(username, {
-                        text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | Daily ${claimDailyRewardss.error}...`});
-                      }
-                    }else{
-                      twisters.put(username, {
-                        text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | Daily Rewards not available...`});
-                    }
+          //         if(getRegisters.message === 'User created with referral' || getRegisters.error === 'User already exists'){
+          //           if(getDailyRewardss.success === true){
+          //             twisters.put(username, {
+          //               text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | Daily Rewards available, trying to claim...`});
+          //             const claimDailyRewardss = await claimDailyRewards(token,user_id)
+          //             if(claimDailyRewardss.tokens){
+          //               twisters.put(username, {
+          //                 text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | Daily Rewards claimed ${claimDailyRewardss.tokens}...`});
+          //             }else{
+          //             twisters.put(username, {
+          //               text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | Daily ${claimDailyRewardss.error}...`});
+          //             }
+          //           }else{
+          //             twisters.put(username, {
+          //               text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | Daily Rewards not available...`});
+          //           }
   
-                    getMissionss.forEach(async (element) => {
-                      const idTask = element.id
-                      const statusTask = element.isCompleted
-                      const titleTask = element.description
+          //           getMissionss.forEach(async (element) => {
+          //             const idTask = element.id
+          //             const statusTask = element.isCompleted
+          //             const titleTask = element.description
   
-                      if(statusTask === false){
-                        let claimMissions = await claimMission(token,idTask)
-                          if(claimMissions.success === true){
-                              twisters.put(username, {
-                                text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | MissionId : ${idTask} missionName : ${titleTask} has been completed...`});
-                          }else if(claimMissions.success === false){
-                              twisters.put(username, {
-                                text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | MissionId : ${idTask} missionName : ${titleTask} can't completed...`});
-                              claimMissions = await claimMission(token,idTask)
-                              if(claimMissions.success === true){
-                                  twisters.put(username, {
-                                    text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | MissionId : ${idTask} missionName : ${titleTask} has been completed...`});
-                              }
-                          }else{
-                            console.log(`[${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | MissionId : ${idTask} missionName : ${titleTask} can't completed...`)
-                          }
-                      }
-                    })
+          //             if(statusTask === false){
+          //               let claimMissions = await claimMission(token,idTask)
+          //                 if(claimMissions.success === true){
+          //                     twisters.put(username, {
+          //                       text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | MissionId : ${idTask} missionName : ${titleTask} has been completed...`});
+          //                 }else if(claimMissions.success === false){
+          //                     twisters.put(username, {
+          //                       text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | MissionId : ${idTask} missionName : ${titleTask} can't completed...`});
+          //                     claimMissions = await claimMission(token,idTask)
+          //                     if(claimMissions.success === true){
+          //                         twisters.put(username, {
+          //                           text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | MissionId : ${idTask} missionName : ${titleTask} has been completed...`});
+          //                     }
+          //                 }else{
+          //                   console.log(`[${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | MissionId : ${idTask} missionName : ${titleTask} can't completed...`)
+          //                 }
+          //             }
+          //           })
     
-                    if(levelInfos.upgrade_available === true && checkBalances.balance > levelInfos.upgrade_price){
-                      twisters.put(username, {
-                        text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | Have enough coins, trying to upgrade...`});
-                      const levelUpgrades = await levelUpgrade(token)
-                      if(levelUpgrades.success === true){
-                      twisters.put(username, {
-                        text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | Success Upgrades to level ${levelUpgrades.next_lvl}...`});
-                      }else{
-                      twisters.put(username, {
-                        text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | Failed Upgrades to level ${levelUpgrades.next_lvl}...`});
-                      }
-                    }else{
-                      twisters.put(username, {
-                        text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | Don't have enough coins to upgrade...`});
-                    }
+          //           if(levelInfos.upgrade_available === true && checkBalances.balance > levelInfos.upgrade_price){
+          //             twisters.put(username, {
+          //               text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | Have enough coins, trying to upgrade...`});
+          //             const levelUpgrades = await levelUpgrade(token)
+          //             if(levelUpgrades.success === true){
+          //             twisters.put(username, {
+          //               text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | Success Upgrades to level ${levelUpgrades.next_lvl}...`});
+          //             }else{
+          //             twisters.put(username, {
+          //               text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | Failed Upgrades to level ${levelUpgrades.next_lvl}...`});
+          //             }
+          //           }else{
+          //             twisters.put(username, {
+          //               text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | Don't have enough coins to upgrade...`});
+          //           }
                     
-                    let tapValue;
-                    if(checkTapss.available_taps > 10){
-                      tapValue = (checkTapss.available_taps/10).toFixed(0)
-                    }else{
-                      tapValue = (checkTapss.available_taps/1)
-                    }
+          //           let tapValue;
+          //           if(checkTapss.available_taps > 10){
+          //             tapValue = (checkTapss.available_taps/10).toFixed(0)
+          //           }else{
+          //             tapValue = (checkTapss.available_taps/1)
+          //           }
   
-                    if(checkTapss.available_taps > 0 && tapValue > 0){
-                      twisters.put(username, {
-                        text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | Daily Taps available ${checkTapss.available_taps}, trying to claim ${tapValue} Taps...`});
-                      const coinTapss = await coinTaps(token,tapValue)
-                        if(coinTapss.success === true){
-                        twisters.put(username, {
-                          text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | Success Claim Daily Taps ${tapValue}...`});
-                        }else{
-                        twisters.put(username, {
-                          text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | Failed Claim Daily Taps ${tapValue}...`});
-                        }
-                    }else{
-                      twisters.put(username, {
-                        text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | Daily Taps not available yet...`});
-                    }
-                  }else{
-                    twisters.put(username, {
-                      text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] User is not registered yet [=> Name ${fullName} | UserId ${user_id} <=], please register first on https://t.me/HexacoinBot...`});
-                  }
-          }))    
+          //           if(checkTapss.available_taps > 0 && tapValue > 0){
+          //             twisters.put(username, {
+          //               text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | Daily Taps available ${checkTapss.available_taps}, trying to claim ${tapValue} Taps...`});
+          //             const coinTapss = await coinTaps(token,tapValue)
+          //               if(coinTapss.success === true){
+          //               twisters.put(username, {
+          //                 text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | Success Claim Daily Taps ${tapValue}...`});
+          //               }else{
+          //               twisters.put(username, {
+          //                 text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | Failed Claim Daily Taps ${tapValue}...`});
+          //               }
+          //           }else{
+          //             twisters.put(username, {
+          //               text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] Main balance ${checkBalances.balance} Level ${levelInfos.lvl} Referral ${getReferrals.first_referrals}:${getReferrals.total_passive_income} | Daily Taps not available yet...`});
+          //           }
+          //         }else{
+          //           twisters.put(username, {
+          //             text: `[${moment().format("DD/MM/YY HH:mm:ss")}] [${username}] User is not registered yet [=> Name ${fullName} | UserId ${user_id} <=], please register first on https://t.me/HexacoinBot...`});
+          //         }
+          // }))    
       } catch (e) {
-          console.log(e)
-          twisters.put(username, {
-            text: `[${moment().format("DD/MM/YY HH:mm:ss")}] Internal Server Error ${e}...`});
+          // console.log(e)
+          // twisters.put(username, {
+          //   text: `[${moment().format("DD/MM/YY HH:mm:ss")}] Internal Server Error ${e}...`});
       }    
     }
 })();
