@@ -444,7 +444,7 @@ const getMembersBot = (botsToken) =>
                 }
               }
               checkData(userData, jsonDataParseMain);
-              await delay(500)
+              await delay(100)
         }
         
         const queryData = JSON.parse(fs.readFileSync(path, "utf8"))
